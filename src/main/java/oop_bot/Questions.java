@@ -1,4 +1,4 @@
-package org.example;
+package oop_bot;
 
 
 import java.util.Random;

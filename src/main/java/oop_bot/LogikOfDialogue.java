@@ -1,15 +1,15 @@
-package org.example;
+package oop_bot;
 
 import java.util.Scanner;
 
 public class LogikOfDialogue {
     private void help() {
         System.out.println("This bot guesses a random number.");
-        System.out.println("Again enter a number from 0 to 4");
+        System.out.println("Enter a number from 0 to 4");
     }
 
     private void questionForTheUser(Integer userNumber) {
-        org.example.Questions q = new org.example.Questions();
+        Questions q = new Questions();
         int randomNumber = q.expressionGenerator();
 
         if (userNumber == randomNumber) {

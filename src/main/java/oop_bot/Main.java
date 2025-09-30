@@ -1,8 +1,8 @@
-package org.example;
+package oop_bot;
 
 public class Main {
     public static void main(String[] args) {
-        org.example.LogikOfDialogue l = new org.example.LogikOfDialogue();
+        LogikOfDialogue l = new LogikOfDialogue();
         l.enterFromConsole();
     }
 }
