@@ -1,6 +1,3 @@
-package oop_bot;
-
-
 import java.util.Random;
 
 public class Questions {

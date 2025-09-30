@@ -1,5 +1,3 @@
-package oop_bot;
-
 import java.util.Scanner;
 
 public class LogikOfDialogue {
