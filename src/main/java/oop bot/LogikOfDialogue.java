@@ -9,7 +9,7 @@ public class LogikOfDialogue {
     }
 
     private void questionForTheUser(Integer userNumber) {
-        Questions q = new Questions();
+        org.example.Questions q = new org.example.Questions();
         int randomNumber = q.expressionGenerator();
 
         if (userNumber == randomNumber) {
