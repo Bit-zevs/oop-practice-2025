@@ -25,22 +25,6 @@ public class DialogueManager {
         String trimmed = message.trim();
         UserSession session = getSession(userId);
 
-        if (session.hasPendingQuestion()) {
-            String reply;
-            if (questions.checkAnswer(session.getPendingMovie(), session.getPendingQuestionText(), trimmed)) {
-                reply = "Да, верно!";
-            } else {
-                if (session.getPendingQuestionText().contains("году")) {
-                    reply = "Неверно. Фильм вышел в " + session.getPendingMovie().getYear() + ".";
-                } else {
-                    reply = "Неверно. Фильм " + session.getPendingMovie().getTitle() + (session.getPendingMovie().hasSequel() ? " имеет продолжение" : " не имеет продолжения") + ".";
-                }
-            }
-
-            session.clearPendingQuestion();
-            return reply;
-        }
-
 
         String[] parts = trimmed.split(" ", 2);
         String command = parts[0].toLowerCase();
@@ -54,7 +38,8 @@ public class DialogueManager {
                 return "Доступные команды:\n" +
                         "/list — показать новинки\n" +
                         "/news — новости кино\n" +
-                        "/ask — задать вопрос о случайном фильме\n" +
+                        "/ask — задать вопрос о случайном фильме, пока не будет написана другая команда или /stopask\n" +
+                        "/stopask — прекращает задавать вопросы\n" +
                         "/watch <название> — отметить фильм как просмотренный\n" +
                         "/watched — список просмотренных фильмов";
             }
@@ -81,6 +66,10 @@ public class DialogueManager {
 
                 return q;
             }
+            case "/stopask" -> {
+                session.clearPendingQuestion();
+                return "Вопросы приостановлены. Для продолжения работы с вопросами напишите /ask или /help чтобы узнать другие команды бота";
+            }
             case "/watch" -> {
                 if (parts.length < 2) {
                     return "Использование: /watch <название фильма>";
@@ -105,6 +94,32 @@ public class DialogueManager {
                 }
                 return watchedList;
             }
+        }
+
+        if (session.hasPendingQuestion()) {
+            String reply;
+            if (questions.checkAnswer(session.getPendingMovie(), session.getPendingQuestionText(), trimmed)) {
+                reply = "Да, верно!";
+            } else {
+                if (session.getPendingQuestionText().contains("году")) {
+                    reply = "Неверно. Фильм вышел в " + session.getPendingMovie().getYear() + ".";
+                } else {
+                    reply = "Неверно. Фильм " + session.getPendingMovie().getTitle() + (session.getPendingMovie().hasSequel() ? " имеет продолжение" : " не имеет продолжения") + ".";
+                }
+            }
+
+//            session.clearPendingQuestion();
+//            продолжает задавать вопросы, пока не будет написана другая команда
+
+            Movie movie = questions.pickRandomMovie();
+
+            if (movie == null) {
+                return "Фильмы не найдены.";
+            }
+
+            String q = questions.generateQuestionFor(movie);
+            session.setPendingQuestion(movie, q);
+            return reply + "\n\n" + q;
         }
 
         return "Неизвестная команда. Введите /help для списка доступных команд.";

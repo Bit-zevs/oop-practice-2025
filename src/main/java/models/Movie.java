@@ -19,6 +19,6 @@ public class Movie {
     public boolean hasSequel() { return hasSequel; }
 
     public String toString() {
-        return title + " (" + year + ")" + (hasSequel ? " — has sequel" : "");
+        return title + " (" + year + ")" + (hasSequel ? " — имеет продолжение" : "");
     }
 }
