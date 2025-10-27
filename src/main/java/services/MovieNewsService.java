@@ -9,9 +9,9 @@ public class MovieNewsService {
         if (movies == null || movies.isEmpty()) {
             return "Пока нет новинок.";
         }
-        Movie m = movies.getFirst();
-        String news = "Новость: фильм \"" + m.getTitle() + "\" вышел в " + m.getYear();
-        if (m.hasSequel())
+        Movie movie = movies.getFirst();
+        String news = "Новость: фильм \"" + movie.getTitle() + "\" вышел в " + movie.getYear();
+        if (movie.hasSequel())
             news += " и уже готовится продолжение!";
         else
             news += ".";

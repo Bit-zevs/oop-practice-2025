@@ -12,12 +12,22 @@ class MovieNewsServiceTest {
     private final MovieNewsService service = new MovieNewsService();
 
     @Test
-    void testGetLatestNews() {
+    void testGetLatestNews_WithSequel() {
         List<Movie> movies = List.of(new Movie("m001", "Test Movie", 2020, true));
         String news = service.getLatestNews(movies);
-        assertTrue(news.contains("Test Movie"));
+        assertEquals("Новость: фильм \"Test Movie\" вышел в 2020 и уже готовится продолжение!", news);
+    }
 
-        String emptyNews = service.getLatestNews(List.of());
-        assertEquals("Пока нет новинок.", emptyNews);
+    @Test
+    void testGetLatestNews_WithoutSequel() {
+        List<Movie> movies = List.of(new Movie("m002", "Old Classic", 1990, false));
+        String news = service.getLatestNews(movies);
+        assertEquals("Новость: фильм \"Old Classic\" вышел в 1990.", news);
+    }
+
+    @Test
+    void testGetLatestNews_NoMovies() {
+        String news = service.getLatestNews(List.of());
+        assertEquals("Пока нет новинок.", news);
     }
 }
