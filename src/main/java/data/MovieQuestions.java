@@ -1,88 +1,47 @@
 package data;
 
 import models.Movie;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
-import java.io.IOException;
-import java.net.URI;
 import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.List;
 
 public class MovieQuestions {
 
-    private final Random rnd = new Random();
-    private static final String API_TOKEN_TEST = "CE3Q1NW-PTZ4A4Z-M8PNE4D-91X7H1D";
-    private static final String API_TOKEN = "RPQH847-PMK4727-HXX41CQ-NEXJY7N";
     private static final String BASE_URL = "https://api.poiskkino.dev";
     private static final String DEFAULT_LANGUAGE = "ru";
+    private static final int DEFAULT_LATEST_LIMIT = 5;
 
-    private final HttpClient client = HttpClient.newHttpClient();
+    private final MovieApiClient apiClient;
+
+    public MovieQuestions() {
+        String apiKey = System.getenv("KINOPOISK_API_KEY");
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException("API token is not set. Please set KINOPOISK_API_KEY environment variable.");
+        }
+
+        this.apiClient = new MovieApiClient(BASE_URL, apiKey, DEFAULT_LANGUAGE);
+    }
 
     public List<Movie> getLatestMovies() {
-        return getLatestMovies(5);
+        return getLatestMovies(DEFAULT_LATEST_LIMIT);
     }
 
     public List<Movie> getLatestMovies(int limit) {
-        String endpoint = "/v1.4/movie?page=1&limit=5&lists=top250";
-        return fetchMovies(endpoint, limit);
-    }
-
-    private List<Movie> fetchMovies(String endpoint, int limit) {
-        List<Movie> movies = new ArrayList<>();
-        try {
-            URI uri = URI.create(BASE_URL + endpoint);
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(uri)
-                    .header("Accept-Language", DEFAULT_LANGUAGE)
-                    .header("X-API-KEY", API_TOKEN)
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-
-            if (response.statusCode() != 200) {
-                System.err.println("Kinopoisk API returned status: " + response.statusCode());
-                return movies;
-            }
-
-            JSONObject obj = new JSONObject(response.body());
-            JSONArray results = obj.optJSONArray("docs");
-            if (results == null) return movies;
-
-            for (int i = 0; i < Math.min(limit, results.length()); i++) {
-                JSONObject m = results.getJSONObject(i);
-                String id = String.valueOf(m.optInt("id", 0));
-                String title = m.optString("name", m.optString("alternativeName", "Неизвестно"));
-                int year = m.optInt("year", 0);
-
-                movies.add(new Movie(id, title, year, false));
-            }
-
-        } catch (IOException | InterruptedException e) {
-            System.err.println("Ошибка при запросе к API КиноПоиска: " + e.getMessage());
-        }
-
-        return movies;
+        String endpoint = "/v1.4/movie?page=1&limit=" + limit + "&lists=popular";
+        return apiClient.fetchMovies(endpoint);
     }
 
 
     public Movie pickRandomMovie() {
-        List<Movie> movies = getLatestMovies(5);
+        String endpoint = "/v1.4/movie/random?lists=oscar-best-film-nominees";
+        List<Movie> movies = apiClient.fetchMovies(endpoint);
         if (movies.isEmpty()) return null;
-        return movies.get(rnd.nextInt(movies.size()));
+        return movies.getFirst();
     }
 
     public String generateQuestionFor(Movie movie) {
-        if (rnd.nextBoolean()) {
-            return "В каком году вышел фильм \"" + movie.getTitle() + "\"?";
-        } else {
-            return "У фильма \"" + movie.getTitle() + "\" есть продолжение? (да/нет)";
-        }
+        return "В каком году вышел фильм \"" + movie.getTitle() + "\"?";
     }
 
     public boolean checkAnswer(Movie movie, String questionText, String userAnswer) {
@@ -105,50 +64,11 @@ public class MovieQuestions {
     }
 
     public Movie findMovieByTitle(String titlePart) {
-        List<Movie> searchResults = searchMovies(titlePart);
+        String endpoint = "/v1.4/movie/search?page=1&limit=1&query=" + URLEncoder.encode(titlePart, StandardCharsets.UTF_8);
+        List<Movie> searchResults = apiClient.fetchMovies(endpoint);
         if (searchResults.isEmpty()) return null;
         return searchResults.getFirst();
 
-    }
-
-
-    private List<Movie> searchMovies(String query) {
-        List<Movie> resultsList = new ArrayList<>();
-        try {
-            String encoded = URLEncoder.encode(query, StandardCharsets.UTF_8);
-            URI uri = URI.create(BASE_URL + "/v1.4/movie?name=" + encoded + "&limit=5");
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(uri)
-                    .header("Accept-Language", DEFAULT_LANGUAGE)
-                    .header("X-API-KEY", API_TOKEN)
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-
-            if (response.statusCode() != 200) {
-                System.err.println("Kinopoisk search returned status: " + response.statusCode());
-                return resultsList;
-            }
-
-            JSONObject obj = new JSONObject(response.body());
-            JSONArray results = obj.optJSONArray("docs");
-            if (results == null) return resultsList;
-
-            for (int i = 0; i < Math.min(5, results.length()); i++) {
-                JSONObject m = results.getJSONObject(i);
-                String id = String.valueOf(m.optInt("id", 0));
-                String title = m.optString("name", m.optString("alternativeName", "Неизвестно"));
-                int year = m.optInt("year", 0);
-
-                resultsList.add(new Movie(id, title, year, false));
-            }
-
-        } catch (IOException | InterruptedException e) {
-            System.err.println("Ошибка при поиске через API КиноПоиска: " + e.getMessage());
-        }
-
-        return resultsList;
     }
 }
 
