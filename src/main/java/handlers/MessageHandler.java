@@ -1,4 +1,5 @@
 package handlers;
+
 import dialogue.DialogueManager;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Update;
@@ -6,15 +7,18 @@ import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.AnswerCallbackQuery;
+
 public class MessageHandler implements UpdateHandler {
     TelegramBot bot;
     DialogueManager manager;
-    public MessageHandler(TelegramBot bot, DialogueManager manager){
-        this.bot=bot;
-        this.manager=manager;
+
+    public MessageHandler(TelegramBot bot, DialogueManager manager) {
+        this.bot = bot;
+        this.manager = manager;
     }
+
     @Override
-    public void handleMessage(Update update){
+    public String handleMessage(Update update) {
         Long chatId = update.message().chat().id();
         String input = update.message().text();
         String userId = "tg-" + chatId;
@@ -24,10 +28,11 @@ public class MessageHandler implements UpdateHandler {
             reply.replyMarkup(getMainKeyboard());
         }
         bot.execute(reply);
-        System.out.println("Чат " + chatId + ": " + input + " → " + response);
+        return "Чат " + chatId + ": " + input + " → " + response;
     }
+
     @Override
-    public void handleCallback(Update update){
+    public String handleCallback(Update update) {
         Long chatId = update.callbackQuery().message().chat().id();
         String callbackData = update.callbackQuery().data();
         String userId = "tg-" + chatId;
@@ -36,9 +41,9 @@ public class MessageHandler implements UpdateHandler {
         reply.replyMarkup(getMainKeyboard());
         bot.execute(reply);
         bot.execute(new AnswerCallbackQuery(update.callbackQuery().id()));
-
-        System.out.println("Кнопка " + chatId + ": " + callbackData + " → " + response);
+        return "Кнопка " + chatId + ": " + callbackData + " → " + response;
     }
+
     private InlineKeyboardMarkup getMainKeyboard() {
         InlineKeyboardButton[] row = {
                 new InlineKeyboardButton("Список").callbackData("/list"),
@@ -48,4 +53,4 @@ public class MessageHandler implements UpdateHandler {
 
         return new InlineKeyboardMarkup(row);
     }
-    }
+}

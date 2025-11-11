@@ -2,7 +2,6 @@ import dialogue.DialogueManager;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
-import com.pengrad.telegrambot.request.SendMessage;
 import handlers.MessageHandler;
 
 public class Main {
@@ -17,9 +16,11 @@ public class Main {
         bot.setUpdatesListener(updates -> {
             for (Update update : updates) {
                 if (update.message() != null && update.message().text() != null) {
-                    messageHandler.handleMessage(update);
+                    String response = messageHandler.handleMessage(update);
+                    System.out.println(response);
                 } else if (update.callbackQuery() != null) {
-                    messageHandler.handleCallback(update);
+                    String response = messageHandler.handleCallback(update);
+                    System.out.println(response);
                 }
             }
             return UpdatesListener.CONFIRMED_UPDATES_ALL;
