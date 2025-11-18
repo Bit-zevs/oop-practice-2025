@@ -6,6 +6,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -14,15 +15,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MovieApiClient {
-    private final String baseUrl;
+    private static final String baseUrl = "https://api.poiskkino.dev";
+    private static final String defaultLanguage = "ru";
     private final String apiKey;
-    private final String defaultLanguage;
     private final HttpClient client = HttpClient.newHttpClient();
 
-    public MovieApiClient(String baseUrl, String apiKey, String defaultLanguage) {
-        this.baseUrl = baseUrl;
+    public MovieApiClient() {
+        String apiKey = System.getenv("KINOPOISK_API_KEY");
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException("API token is not set. Please set KINOPOISK_API_KEY environment variable.");
+        }
         this.apiKey = apiKey;
-        this.defaultLanguage = defaultLanguage;
+    }
+
+    public List<Movie> latestMovies(int limit){
+        String endpoint = "/v1.4/movie?page=1&limit=" + limit + "&lists=popular";
+        return fetchMovies(endpoint);
+    }
+
+    public Movie randomMovie() {
+        String endpoint = "/v1.4/movie/random?lists=oscar-best-film-nominees";
+        List<Movie> movies = fetchMovies(endpoint);
+        if (movies.isEmpty()) return null;
+        return movies.getFirst();
+    }
+
+    public Movie movieByTitle(String titlePart){
+        String endpoint = "/v1.4/movie/search?page=1&limit=1&query=" + URLEncoder.encode(titlePart, StandardCharsets.UTF_8);
+        List<Movie> searchResults = fetchMovies(endpoint);
+        if (searchResults.isEmpty()) return null;
+        return searchResults.getFirst();
     }
 
     public List<Movie> fetchMovies(String endpoint) {
