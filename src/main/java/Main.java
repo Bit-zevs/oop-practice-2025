@@ -1,25 +1,37 @@
 import dialogue.DialogueManager;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Scanner;
+import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.UpdatesListener;
+import com.pengrad.telegrambot.model.Update;
+import handlers.MessageHandler;
 
 public class Main {
     public static void main(String[] args) {
         DialogueManager manager = new DialogueManager();
-        Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8);
-        String userId = "console-user";
 
-        System.out.println("Кино бот (консольная версия). Напиши /start, чтобы начать. /quit — выход.");
-        while (true) {
-            System.out.print("> ");
-            String input = scanner.nextLine();
-            if (input.equalsIgnoreCase("/quit")) {
-                System.out.println("До встречи");
-                break;
-            }
-            String response = manager.handleMessage(userId, input);
-            System.out.println(response);
+        String token = System.getenv("TELEGRAM_BOT_TOKEN");
+        if (token == null || token.isBlank()) {
+            throw new IllegalStateException("TELEGRAM_BOT_TOKEN is not set. Please configure it in environment variables.");
         }
-        scanner.close();
+        TelegramBot bot = new TelegramBot(token);
+        MessageHandler messageHandler = new MessageHandler(bot, manager);
+        System.out.println("Бот запущен");
+
+        bot.setUpdatesListener(updates -> {
+            for (Update update : updates) {
+                if (update.message() != null && update.message().text() != null) {
+                    String response = messageHandler.handleMessage(update);
+                    System.out.println(response);
+                } else if (update.callbackQuery() != null) {
+                    String response = messageHandler.handleCallback(update);
+                    System.out.println(response);
+                }
+            }
+            return UpdatesListener.CONFIRMED_UPDATES_ALL;
+        });
+        try {
+            Thread.currentThread().join();
+        } catch (InterruptedException e) {
+            System.out.println("Бот остановлен");
+        }
     }
 }

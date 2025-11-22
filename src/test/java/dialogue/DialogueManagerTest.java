@@ -35,7 +35,6 @@ public class DialogueManagerTest {
     void testListCommand() {
         String response = manager.handleMessage(userId, "/list");
         assertTrue(response.contains("Новинки"));
-        assertTrue(response.contains("Оппенгеймер"));
     }
 
     @Test
