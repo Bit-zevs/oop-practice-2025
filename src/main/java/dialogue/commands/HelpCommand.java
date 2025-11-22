@@ -1,5 +1,6 @@
 package dialogue.commands;
 
+import dialogue.BotResponse;
 import models.UserSession;
 
 import java.util.Map;
@@ -23,11 +24,11 @@ public class HelpCommand implements BotCommand {
     }
 
     @Override
-    public String execute(String userId, String[] args, UserSession session) {
+    public BotResponse execute(String userId, String[] args, UserSession session) {
         StringBuilder sb = new StringBuilder("Доступные команды:\n");
         for (BotCommand cmd : commands.values()) {
             sb.append(cmd.getName()).append(" — ").append(cmd.getDescription()).append("\n");
         }
-        return sb.toString();
+        return new BotResponse(sb.toString());
     }
 }

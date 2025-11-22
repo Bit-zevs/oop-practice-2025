@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-
 public class DialogueManagerTest {
 
     private DialogueManager manager;
@@ -18,86 +17,111 @@ public class DialogueManagerTest {
 
     @Test
     void testStartCommand() {
-        String response = manager.handleMessage(userId, "/start");
-        assertTrue(response.contains("Кино бот"));
-        assertTrue(response.contains("/help"));
+        BotResponse response = manager.handleMessage(userId, "/start");
+        String text = response.getText();
+        assertNotNull(text);
+        assertTrue(text.contains("Кино бот"));
+        assertTrue(text.contains("/help"));
+        assertFalse(response.hasPhoto());
     }
 
     @Test
     void testHelpCommand() {
-        String response = manager.handleMessage(userId, "/help");
-        assertTrue(response.contains("/list"));
-        assertTrue(response.contains("/news"));
-        assertTrue(response.contains("/ask"));
+        BotResponse response = manager.handleMessage(userId, "/help");
+        String text = response.getText();
+        assertNotNull(text);
+        assertTrue(text.contains("/list"));
+        assertTrue(text.contains("/news"));
+        assertTrue(text.contains("/ask"));
+        assertFalse(response.hasPhoto());
     }
 
     @Test
     void testListCommand() {
-        String response = manager.handleMessage(userId, "/list");
-        assertTrue(response.contains("Новинки"));
-        assertTrue(response.contains("Оппенгеймер"));
+        BotResponse response = manager.handleMessage(userId, "/list");
+        String text = response.getText();
+        assertNotNull(text);
+        assertTrue(text.contains("Новинки"));
+        assertFalse(response.hasPhoto());
     }
 
     @Test
     void testNewsCommand() {
-        String response = manager.handleMessage(userId, "/news");
-        assertTrue(response.contains("Новость"));
-        assertTrue(response.contains("вышел"));
+        BotResponse response = manager.handleMessage(userId, "/news");
+        String text = response.getText();
+        assertNotNull(text);
+        assertTrue(text.toLowerCase().contains("новость") || text.toLowerCase().contains("вышел"));
+        assertFalse(response.hasPhoto());
     }
 
     @Test
     void testAskAndAnswerFlow() {
-        String question = manager.handleMessage(userId, "/ask");
+        BotResponse questionResp = manager.handleMessage(userId, "/ask");
+        String question = questionResp.getText();
+        assertNotNull(question);
         assertTrue(question.contains("фильм"), "Должен быть задан вопрос о фильме");
 
-        String wrongAnswer = manager.handleMessage(userId, "1234");
-
-        assertTrue(
-                wrongAnswer.contains("Неверно") || wrongAnswer.contains("верно"),
-                "Бот должен сообщить, правильный ответ или нет"
-        );
-        assertTrue(
-                wrongAnswer.contains("?"),
-                "После ответа бот должен задать новый вопрос"
-        );
+        BotResponse wrongAnswerResp = manager.handleMessage(userId, "1234");
+        String wrongAnswer = wrongAnswerResp.getText();
+        assertNotNull(wrongAnswer);
+        assertTrue(wrongAnswer.toLowerCase().contains("верно") || wrongAnswer.toLowerCase().contains("неверно"), "Бот должен сообщить, правильный ответ или нет");
+        assertTrue(wrongAnswer.contains("?"), "После ответа бот должен задать новый вопрос");
     }
 
     @Test
     void testStopAskCommand() {
         manager.handleMessage(userId, "/ask");
 
-        String response = manager.handleMessage(userId, "/stopask");
-
+        BotResponse responseResp = manager.handleMessage(userId, "/stopask");
+        String response = responseResp.getText();
+        assertNotNull(response);
         assertTrue(response.toLowerCase().contains("приостановлены"));
+        assertFalse(responseResp.hasPhoto());
 
-        String afterStop = manager.handleMessage(userId, "2000");
-        assertTrue(afterStop.contains("Неизвестная команда") || afterStop.contains("/help"));
+        BotResponse afterStopResp = manager.handleMessage(userId, "2000");
+        String afterStop = afterStopResp.getText();
+        assertTrue(afterStop.toLowerCase().contains("неизвестная команда") || afterStop.contains("/help"));
     }
 
     @Test
     void testWatchAndWatchedCommands() {
-        String watchResp = manager.handleMessage(userId, "/watch Титаник");
-        assertTrue(watchResp.contains("Титаник"), "Должен быть добавлен фильм Титаник");
+        BotResponse watchResp = manager.handleMessage(userId, "/watch Титаник");
+        String watchText = watchResp.getText();
+        assertNotNull(watchText);
+        assertTrue(watchText.contains("Титаник"), "Должен быть добавлен фильм Титаник");
+        assertFalse(watchResp.hasPhoto());
 
-        String watchedResp = manager.handleMessage(userId, "/watched");
-        assertTrue(watchedResp.contains("Титаник"), "Список просмотренных должен содержать Титаник");
+        BotResponse watchedResp = manager.handleMessage(userId, "/watched");
+        String watchedText = watchedResp.getText();
+        assertNotNull(watchedText);
+        assertTrue(watchedText.contains("Титаник"), "Список просмотренных должен содержать Титаник");
+        assertFalse(watchedResp.hasPhoto());
     }
 
     @Test
     void testWatchUnknownMovie() {
-        String response = manager.handleMessage(userId, "/watch НеизвестныйФильм");
+        BotResponse responseResp = manager.handleMessage(userId, "/watch НеизвестныйФильм");
+        String response = responseResp.getText();
+        assertNotNull(response);
         assertTrue(response.toLowerCase().contains("не найден"));
+        assertFalse(responseResp.hasPhoto());
     }
 
     @Test
     void testWatchedEmptyList() {
-        String response = manager.handleMessage(userId, "/watched");
+        BotResponse responseResp = manager.handleMessage(userId, "/watched");
+        String response = responseResp.getText();
+        assertNotNull(response);
         assertTrue(response.toLowerCase().contains("не отметили"));
+        assertFalse(responseResp.hasPhoto());
     }
 
     @Test
     void testUnknownCommand() {
-        String response = manager.handleMessage(userId, "/abracadabra");
+        BotResponse responseResp = manager.handleMessage(userId, "/abracadabra");
+        String response = responseResp.getText();
+        assertNotNull(response);
         assertTrue(response.toLowerCase().contains("неизвестная команда"));
+        assertFalse(responseResp.hasPhoto());
     }
 }

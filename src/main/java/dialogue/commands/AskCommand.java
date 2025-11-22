@@ -1,6 +1,7 @@
 package dialogue.commands;
 
 import data.MovieQuestions;
+import dialogue.BotResponse;
 import models.Movie;
 import models.UserSession;
 
@@ -23,14 +24,14 @@ public class AskCommand implements BotCommand {
     }
 
     @Override
-    public String execute(String userId, String[] args, UserSession session) {
+    public BotResponse execute(String userId, String[] args, UserSession session) {
         Movie movie = questions.pickRandomMovie();
         if (movie == null) {
-            return "Фильмы не найдены.";
+            return new BotResponse("Фильмы не найдены.");
         }
 
         String q = questions.generateQuestionFor(movie);
         session.setPendingQuestion(movie, q);
-        return q;
+        return new BotResponse(q);
     }
 }

@@ -5,37 +5,40 @@ import data.MovieQuestions;
 import models.Movie;
 import models.UserSession;
 
-public class WatchCommand implements BotCommand {
+public class FindCommand implements BotCommand {
 
     private final MovieQuestions questions;
 
-    public WatchCommand(MovieQuestions questions) {
+    public FindCommand(MovieQuestions questions) {
         this.questions = questions;
     }
 
     @Override
     public String getName() {
-        return "/watch";
+        return "/find";
     }
 
     @Override
     public String getDescription() {
-        return "отметить фильм как просмотренный";
+        return "Поиск фильма";
     }
 
     @Override
     public BotResponse execute(String userId, String[] args, UserSession session) {
         if (args.length == 0) {
-            return new BotResponse("Использование: /watch <название фильма>");
+            return new BotResponse("Использование: /find <название фильма>");
         }
 
         String titlePart = String.join(" ", args);
         Movie found = questions.findMovieByTitle(titlePart);
-        if (found != null) {
-            session.markWatched(found);
-            return new BotResponse("Фильм \"" + found.getTitle() + "\" добавлен в список просмотренных.");
-        } else {
+
+        if (found == null) {
             return new BotResponse("Фильм не найден.");
         }
+
+        String text = "🎬" + found + "\n\n" +
+                found.getDescription() + "\n\n";
+
+        return new BotResponse(text, found.getPosterUrl());
     }
 }
