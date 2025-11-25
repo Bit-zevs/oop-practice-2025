@@ -43,8 +43,6 @@ public class DialogueManagerTest {
         assertNotNull(text);
         assertTrue(text.contains("Новинки"));
         assertFalse(response.hasPhoto());
-        String response = manager.handleMessage(userId, "/list");
-        assertTrue(response.contains("Новинки"));
     }
 
     @Test
