@@ -85,7 +85,25 @@ public class MovieApiClient {
 
                 boolean hasSequel = m.optBoolean("hasSequel", false);
 
-                movies.add(new Movie(id, title, year, hasSequel));
+                String description = m.optString("description", "");
+                if (description.isBlank()) {
+                    description = m.optString("shortDescription", "");
+                }
+                if (description.isBlank()) {
+                    description = "Описание отсутствует";
+                }
+
+                String posterUrl = null;
+                if (m.has("poster")) {
+                    JSONObject poster = m.getJSONObject("poster");
+                    posterUrl = poster.optString("url", null);
+
+                    if (posterUrl == null || posterUrl.isBlank()) {
+                        posterUrl = poster.optString("previewUrl", null);
+                    }
+                }
+
+                movies.add(new Movie(id, title, year, hasSequel, description, posterUrl));
             }
 
         } catch (IOException | InterruptedException e) {
