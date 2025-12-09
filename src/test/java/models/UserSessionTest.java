@@ -29,7 +29,9 @@ class UserSessionTest {
         session.markWatched(movie);
         assertEquals(1, session.getWatched().size());
 
-        session.markWatched(movie);
+        try {
+            session.markWatched(movie);
+        } catch (IllegalStateException _){}
         assertEquals(1, session.getWatched().size(), "Дубликаты не должны добавляться");
     }
 }

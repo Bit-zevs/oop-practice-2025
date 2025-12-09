@@ -14,4 +14,8 @@ public class MessageHandler {
     public BotResponse process(String userId, String input) {
         return manager.handleMessage(userId, input);
     }
+
+    public DialogueManager getDialogueManager() {
+        return manager;
+    }
 }

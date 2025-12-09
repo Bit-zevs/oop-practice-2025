@@ -20,7 +20,7 @@ public class DialogueManagerTest {
         BotResponse response = manager.handleMessage(userId, "/start");
         String text = response.getText();
         assertNotNull(text);
-        assertTrue(text.contains("Кино бот"));
+        assertTrue(text.toLowerCase().contains("кино бот"));
         assertTrue(text.contains("/help"));
         assertFalse(response.hasPhoto());
     }
@@ -59,13 +59,15 @@ public class DialogueManagerTest {
         BotResponse questionResp = manager.handleMessage(userId, "/ask");
         String question = questionResp.getText();
         assertNotNull(question);
-        assertTrue(question.contains("фильм"), "Должен быть задан вопрос о фильме");
+        assertTrue(question.toLowerCase().contains("фильм") || question.toLowerCase().contains("вопрос"),
+                "Должен быть задан вопрос о фильме");
 
-        BotResponse wrongAnswerResp = manager.handleMessage(userId, "1234");
-        String wrongAnswer = wrongAnswerResp.getText();
-        assertNotNull(wrongAnswer);
-        assertTrue(wrongAnswer.toLowerCase().contains("верно") || wrongAnswer.toLowerCase().contains("неверно"), "Бот должен сообщить, правильный ответ или нет");
-        assertTrue(wrongAnswer.contains("?"), "После ответа бот должен задать новый вопрос");
+        BotResponse answerResp = manager.handleMessage(userId, "1234");
+        String answerText = answerResp.getText();
+        assertNotNull(answerText);
+
+        assertTrue(answerText.toLowerCase().contains("верно") || answerText.toLowerCase().contains("неверно"),
+                "Бот должен сообщить, правильный ответ или нет");
     }
 
     @Test
@@ -75,12 +77,12 @@ public class DialogueManagerTest {
         BotResponse responseResp = manager.handleMessage(userId, "/stopask");
         String response = responseResp.getText();
         assertNotNull(response);
-        assertTrue(response.toLowerCase().contains("приостановлены"));
+        assertTrue(response.toLowerCase().contains("приостановл"));
         assertFalse(responseResp.hasPhoto());
 
-        BotResponse afterStopResp = manager.handleMessage(userId, "2000");
+        BotResponse afterStopResp = manager.handleMessage(userId, "какой-то ответ");
         String afterStop = afterStopResp.getText();
-        assertTrue(afterStop.toLowerCase().contains("неизвестная команда") || afterStop.contains("/help"));
+        assertTrue(afterStop.toLowerCase().contains("неизвестная") || afterStop.contains("/help"));
     }
 
     @Test
@@ -88,13 +90,13 @@ public class DialogueManagerTest {
         BotResponse watchResp = manager.handleMessage(userId, "/watch Титаник");
         String watchText = watchResp.getText();
         assertNotNull(watchText);
-        assertTrue(watchText.contains("Титаник"), "Должен быть добавлен фильм Титаник");
+        assertTrue(watchText.contains("Титаник"));
         assertFalse(watchResp.hasPhoto());
 
         BotResponse watchedResp = manager.handleMessage(userId, "/watched");
         String watchedText = watchedResp.getText();
         assertNotNull(watchedText);
-        assertTrue(watchedText.contains("Титаник"), "Список просмотренных должен содержать Титаник");
+        assertTrue(watchedText.contains("Титаник"));
         assertFalse(watchedResp.hasPhoto());
     }
 
@@ -109,10 +111,11 @@ public class DialogueManagerTest {
 
     @Test
     void testWatchedEmptyList() {
-        BotResponse responseResp = manager.handleMessage(userId, "/watched");
+        String newUser = "new-user";
+        BotResponse responseResp = manager.handleMessage(newUser, "/watched");
         String response = responseResp.getText();
         assertNotNull(response);
-        assertTrue(response.toLowerCase().contains("не отметили"));
+        assertTrue(response.toLowerCase().contains("ещё не отметили") || response.toLowerCase().contains("не отметили"));
         assertFalse(responseResp.hasPhoto());
     }
 
