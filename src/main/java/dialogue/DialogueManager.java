@@ -23,6 +23,7 @@ public class DialogueManager {
         register(new AskCommand(questions));
         register(new StopAskCommand());
         register(new WatchCommand(questions));
+        register(new FindCommand(questions));
         register(new WatchedCommand());
     }
 
@@ -37,7 +38,7 @@ public class DialogueManager {
         return sessions.get(userId);
     }
 
-    public String handleMessage(String userId, String message) {
+    public BotResponse handleMessage(String userId, String message) {
         String trimmed = message.trim();
         UserSession session = getSession(userId);
 
@@ -51,9 +52,10 @@ public class DialogueManager {
         }
 
         if (session.hasPendingQuestion()) {
-            return new QuestionAnswerHandler(questions).handleAnswer(session, trimmed);
+            String text = new QuestionAnswerHandler(questions).handleAnswer(session, trimmed);
+            return new BotResponse(text);
         }
 
-        return "Неизвестная команда. Введите /help для списка доступных команд.";
+        return new BotResponse("Неизвестная команда. Введите /help для списка доступных команд.");
     }
 }

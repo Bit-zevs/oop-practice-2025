@@ -1,5 +1,6 @@
 package dialogue.commands;
 
+import dialogue.BotResponse;
 import models.UserSession;
 
 public class StartCommand implements BotCommand {
@@ -14,8 +15,10 @@ public class StartCommand implements BotCommand {
     }
 
     @Override
-    public String execute(String userId, String[] args, UserSession session) {
-        return "Привет! Я — Кино бот. Расскажу о новинках кино и задам вопросы о фильмах.\n" +
-                "Команды: /help, /list, /news, /ask, /watch <название>, /watched";
+    public BotResponse execute(String userId, String[] args, UserSession session) {
+        return new BotResponse(
+                "Привет! Я — Кино бот. Расскажу о новинках кино и задам вопросы о фильмах.\n" +
+                        "Команды: /help, /list, /news, /ask, /watch <название>, /watched"
+        );
     }
 }

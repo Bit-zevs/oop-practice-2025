@@ -1,5 +1,6 @@
 package dialogue.commands;
 
+import dialogue.BotResponse;
 import data.MovieQuestions;
 import models.UserSession;
 import services.MovieNewsService;
@@ -25,7 +26,8 @@ public class NewsCommand implements BotCommand {
     }
 
     @Override
-    public String execute(String userId, String[] args, UserSession session) {
-        return newsService.getLatestNews(questions.getLatestMovies());
+    public BotResponse execute(String userId, String[] args, UserSession session) {
+        String news = newsService.getLatestNews(questions.getLatestMovies());
+        return new BotResponse(news);
     }
 }

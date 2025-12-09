@@ -1,37 +1,23 @@
+import services.BotLauncher;
 import dialogue.DialogueManager;
-import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.UpdatesListener;
-import com.pengrad.telegrambot.model.Update;
-import handlers.MessageHandler;
 
 public class Main {
     public static void main(String[] args) {
+        if (args.length == 0) {
+            System.out.println("Пожалуйста, укажите режим: telegram, console или both");
+            return;
+        }
+
+        String mode = args[0].toLowerCase();
         DialogueManager manager = new DialogueManager();
 
-        String token = System.getenv("TELEGRAM_BOT_TOKEN");
-        if (token == null || token.isBlank()) {
-            throw new IllegalStateException("TELEGRAM_BOT_TOKEN is not set. Please configure it in environment variables.");
-        }
-        TelegramBot bot = new TelegramBot(token);
-        MessageHandler messageHandler = new MessageHandler(bot, manager);
-        System.out.println("Бот запущен");
+        BotLauncher launcher = new BotLauncher();
 
-        bot.setUpdatesListener(updates -> {
-            for (Update update : updates) {
-                if (update.message() != null && update.message().text() != null) {
-                    String response = messageHandler.handleMessage(update);
-                    System.out.println(response);
-                } else if (update.callbackQuery() != null) {
-                    String response = messageHandler.handleCallback(update);
-                    System.out.println(response);
-                }
-            }
-            return UpdatesListener.CONFIRMED_UPDATES_ALL;
-        });
-        try {
-            Thread.currentThread().join();
-        } catch (InterruptedException e) {
-            System.out.println("Бот остановлен");
+        switch (mode) {
+            case "telegram" -> launcher.runTelegram(manager);
+            case "console" -> launcher.runConsole(manager);
+            case "both" -> launcher.runBoth(manager);
+            default -> System.out.println("Неверный режим. Используйте: telegram, console или both");
         }
     }
 }

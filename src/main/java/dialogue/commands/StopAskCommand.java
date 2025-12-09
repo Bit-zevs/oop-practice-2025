@@ -1,5 +1,6 @@
 package dialogue.commands;
 
+import dialogue.BotResponse;
 import models.UserSession;
 
 public class StopAskCommand implements BotCommand {
@@ -15,8 +16,10 @@ public class StopAskCommand implements BotCommand {
     }
 
     @Override
-    public String execute(String userId, String[] args, UserSession session) {
+    public BotResponse execute(String userId, String[] args, UserSession session) {
         session.clearPendingQuestion();
-        return "Вопросы приостановлены. Для продолжения работы с вопросами напишите /ask или /help чтобы узнать другие команды бота";
+        return new BotResponse(
+                "Вопросы приостановлены. Для продолжения работы с вопросами напишите /ask или /help чтобы узнать другие команды бота"
+        );
     }
 }
