@@ -8,21 +8,22 @@ import java.util.Set;
 public class UserSession {
     private Movie pendingMovie;
     private String pendingQuestionText;
+    private User user; // Используем новый класс User
+
     private final Set<String> watchedIds = new HashSet<>();
     private final List<Movie> watched = new ArrayList<>();
 
-    private String username;
-    private String firstName;
-    private String lastName;
+    public UserSession(User user) {
+        this.user = user;
+    }
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public User getUser() {
+        return user;
+    }
 
-    public String getFirstName() { return firstName; }
-    public void setFirstName(String firstName) { this.firstName = firstName; }
-
-    public String getLastName() { return lastName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
+    public void setUser(User user) {
+        this.user = user;
+    }
 
     public boolean hasPendingQuestion() {
         return pendingMovie != null && pendingQuestionText != null;
@@ -64,12 +65,14 @@ public class UserSession {
         if (movie == null) return false;
         return watchedIds.contains(movie.getId());
     }
+
     public void addWatchedMovie(Movie movie) {
         if (!watchedIds.contains(movie.getId())) {
             watchedIds.add(movie.getId());
             watched.add(movie);
         }
     }
+
     public List<Movie> getWatched() {
         return new ArrayList<>(watched);
     }
