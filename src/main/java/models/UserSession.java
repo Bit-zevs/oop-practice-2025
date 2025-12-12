@@ -8,7 +8,7 @@ import java.util.Set;
 public class UserSession {
     private Movie pendingMovie;
     private String pendingQuestionText;
-    private User user; // Используем новый класс User
+    private User user;
 
     private final Set<String> watchedIds = new HashSet<>();
     private final List<Movie> watched = new ArrayList<>();
@@ -75,5 +75,8 @@ public class UserSession {
 
     public List<Movie> getWatched() {
         return new ArrayList<>(watched);
+    }
+    public Set<String> getWatchedIds() {
+        return watchedIds;
     }
 }

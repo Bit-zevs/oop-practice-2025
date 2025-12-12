@@ -5,7 +5,7 @@ import dialogue.commands.*;
 import models.UserSession;
 import models.Movie;
 import services.MovieNewsService;
-import db.DatabaseService;
+import database.DatabaseService;
 
 import java.util.HashMap;
 import java.util.Map;

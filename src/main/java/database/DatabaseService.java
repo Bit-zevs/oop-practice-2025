@@ -1,4 +1,4 @@
-package db;
+package database;
 
 import models.Movie;
 import models.User;
@@ -33,26 +33,26 @@ public class DatabaseService {
     private void initDatabase() {
         try (Connection conn = getConnection()) {
             String usersSql = """
-                CREATE TABLE IF NOT EXISTS users (
-                    telegram_id VARCHAR(50) PRIMARY KEY,
-                    username VARCHAR(100),
-                    first_name VARCHAR(100),
-                    last_name VARCHAR(100)
-                )
-            """;
+                        CREATE TABLE IF NOT EXISTS users (
+                            telegram_id VARCHAR(50) PRIMARY KEY,
+                            username VARCHAR(100),
+                            first_name VARCHAR(100),
+                            last_name VARCHAR(100)
+                        )
+                    """;
             conn.prepareStatement(usersSql).execute();
 
             String moviesSql = """
-                CREATE TABLE IF NOT EXISTS watched_movies (
-                    id SERIAL PRIMARY KEY,
-                    telegram_id VARCHAR(50) NOT NULL,
-                    movie_id VARCHAR(50) NOT NULL,
-                    movie_title VARCHAR(255) NOT NULL,
-                    movie_year INT NOT NULL,
-                    watched_at TIMESTAMP DEFAULT NOW(),
-                    UNIQUE (telegram_id, movie_id)
-                )
-            """;
+                        CREATE TABLE IF NOT EXISTS watched_movies (
+                            id SERIAL PRIMARY KEY,
+                            telegram_id VARCHAR(50) NOT NULL,
+                            movie_id VARCHAR(50) NOT NULL,
+                            movie_title VARCHAR(255) NOT NULL,
+                            movie_year INT NOT NULL,
+                            watched_at TIMESTAMP DEFAULT NOW(),
+                            UNIQUE (telegram_id, movie_id)
+                        )
+                    """;
             conn.prepareStatement(moviesSql).execute();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -60,14 +60,20 @@ public class DatabaseService {
     }
 
     public UserSession loadUserSession(String userId) {
-        User user = null;
-        List<Movie> watchedMovies = new ArrayList<>();
+        User user;
 
         try (Connection conn = getConnection()) {
-            String sql = "SELECT username, first_name, last_name FROM users WHERE telegram_id = ?";
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setString(1, userId);
-            ResultSet rs = stmt.executeQuery();
+
+            String sqlUser = """
+                        SELECT username, first_name, last_name
+                        FROM users 
+                        WHERE telegram_id = ?
+                    """;
+
+            PreparedStatement stmtUser = conn.prepareStatement(sqlUser);
+            stmtUser.setString(1, userId);
+
+            ResultSet rs = stmtUser.executeQuery();
 
             if (rs.next()) {
                 user = new User(
@@ -76,24 +82,37 @@ public class DatabaseService {
                         rs.getString("last_name")
                 );
             } else {
-                String insertSql = "INSERT INTO users (telegram_id) VALUES (?)";
-                PreparedStatement insertStmt = conn.prepareStatement(insertSql);
-                insertStmt.setString(1, userId);
-                insertStmt.executeUpdate();
-                user = new User();
-            }
+                user = new User("", "", "");
 
-            watchedMovies = loadWatchedMovies(userId);
+                String insertUser = """
+                            INSERT INTO users (telegram_id, username, first_name, last_name)
+                            VALUES (?, ?, ?, ?)
+                        """;
+
+                PreparedStatement insertStmt = conn.prepareStatement(insertUser);
+                insertStmt.setString(1, userId);
+                insertStmt.setString(2, "");
+                insertStmt.setString(3, "");
+                insertStmt.setString(4, "");
+                insertStmt.executeUpdate();
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
+            user = new User("", "", "");
         }
 
         UserSession session = new UserSession(user);
-        session.getWatched().addAll(watchedMovies);
+
+        List<Movie> watchedMovies = loadWatchedMovies(userId);
+
+        for (Movie movie : watchedMovies) {
+            session.addWatchedMovie(movie);
+        }
 
         return session;
     }
+
 
     public void saveSession(String userId, UserSession session) {
         try (Connection conn = getConnection()) {
@@ -113,10 +132,10 @@ public class DatabaseService {
     public void saveWatchedMovie(String userId, Movie movie) {
         try (Connection conn = getConnection()) {
             String sql = """
-                INSERT INTO watched_movies (telegram_id, movie_id, movie_title, movie_year)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT (telegram_id, movie_id) DO NOTHING
-            """;
+                        INSERT INTO watched_movies (telegram_id, movie_id, movie_title, movie_year)
+                        VALUES (?, ?, ?, ?)
+                        ON CONFLICT (telegram_id, movie_id) DO NOTHING
+                    """;
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, userId);
             stmt.setString(2, movie.getId());
