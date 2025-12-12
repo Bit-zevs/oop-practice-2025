@@ -31,11 +31,16 @@ public class WatchCommand implements BotCommand {
 
         String titlePart = String.join(" ", args);
         Movie found = questions.findMovieByTitle(titlePart);
-        if (found != null) {
-            session.markWatched(found);
-            return new BotResponse("Фильм \"" + found.getTitle() + "\" добавлен в список просмотренных.");
-        } else {
+
+        if (found == null) {
             return new BotResponse("Фильм не найден.");
+        }
+
+        try {
+            session.markWatched(found);
+            return new BotResponse("Фильм \"*" + found.getTitle() + "*\" добавлен в список просмотренных");
+        } catch (IllegalStateException e) {
+            return new BotResponse("Фильм \"*" + found.getTitle() + "*\" уже есть в списке просмотренных");
         }
     }
 }

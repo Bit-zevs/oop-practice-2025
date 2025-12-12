@@ -94,12 +94,19 @@ public class MovieApiClient {
                 }
 
                 String posterUrl = null;
-                if (m.has("poster")) {
-                    JSONObject poster = m.getJSONObject("poster");
-                    posterUrl = poster.optString("url", null);
+                if (m.has("poster") && !m.isNull("poster")) {
+                    JSONObject poster = m.optJSONObject("poster");
+                    if (poster != null) {
+                        posterUrl = poster.optString("url", null);
 
-                    if (posterUrl == null || posterUrl.isBlank()) {
-                        posterUrl = poster.optString("previewUrl", null);
+                        if (posterUrl == null || posterUrl.isBlank()) {
+                            posterUrl = poster.optString("previewUrl", null);
+                        }
+                    } else {
+                        String posterString = m.optString("poster");
+                        if (!posterString.isEmpty() && !posterString.equals("null")) {
+                            posterUrl = posterString;
+                        }
                     }
                 }
 

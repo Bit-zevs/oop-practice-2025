@@ -27,7 +27,8 @@ public class ListCommand implements BotCommand {
     public BotResponse execute(String userId, String[] args, UserSession session) {
         StringBuilder result = new StringBuilder("Новинки:\n");
         for (Movie m : questions.getLatestMovies()) {
-            result.append("- ").append(m.getTitle()).append(" (").append(m.getYear()).append(")\n");
+            result.append("- ").append(m.getTitle())
+                    .append(" (").append(m.getYear()).append(")\n");
         }
         return new BotResponse(result.toString());
     }

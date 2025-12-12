@@ -3,7 +3,9 @@ package dialogue;
 import data.MovieQuestions;
 import dialogue.commands.*;
 import models.UserSession;
+import models.Movie;
 import services.MovieNewsService;
+import database.DatabaseService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,10 +14,16 @@ public class DialogueManager {
 
     private final MovieQuestions questions = new MovieQuestions();
     private final MovieNewsService newsService = new MovieNewsService();
+    private final DatabaseService dbService = new DatabaseService();
+
     private final Map<String, UserSession> sessions = new HashMap<>();
     private final Map<String, BotCommand> commands = new HashMap<>();
 
     public DialogueManager() {
+        registerCommands();
+    }
+
+    private void registerCommands() {
         register(new StartCommand());
         register(new ListCommand(questions));
         register(new HelpCommand(commands));
@@ -23,6 +31,7 @@ public class DialogueManager {
         register(new AskCommand(questions));
         register(new StopAskCommand());
         register(new WatchCommand(questions));
+        register(new UnwatchCommand(questions, this));
         register(new FindCommand(questions));
         register(new WatchedCommand());
     }
@@ -31,11 +40,20 @@ public class DialogueManager {
         commands.put(command.getName(), command);
     }
 
-    private UserSession getSession(String userId) {
-        if (!sessions.containsKey(userId)) {
-            sessions.put(userId, new UserSession());
-        }
-        return sessions.get(userId);
+    public UserSession getSession(String userId) {
+        return sessions.computeIfAbsent(userId, dbService::loadUserSession);
+    }
+
+    public void saveWatchedMovie(String userId, Movie movie) {
+        dbService.saveWatchedMovie(userId, movie);
+    }
+
+    public void removeWatchedMovie(String userId, Movie movie) {
+        dbService.removeWatchedMovie(userId, movie);
+    }
+
+    public void saveSession(String userId, UserSession session) {
+        dbService.saveSession(userId, session);
     }
 
     public BotResponse handleMessage(String userId, String message) {
@@ -48,14 +66,24 @@ public class DialogueManager {
 
         BotCommand command = commands.get(commandName);
         if (command != null) {
-            return command.execute(userId, args, session);
+            BotResponse response = command.execute(userId, args, session);
+            persistSessionData(userId, session);
+            return response;
         }
 
         if (session.hasPendingQuestion()) {
             String text = new QuestionAnswerHandler(questions).handleAnswer(session, trimmed);
+            persistSessionData(userId, session);
             return new BotResponse(text);
         }
 
         return new BotResponse("Неизвестная команда. Введите /help для списка доступных команд.");
+    }
+
+    private void persistSessionData(String userId, UserSession session) {
+        for (Movie movie : session.getWatched()) {
+            saveWatchedMovie(userId, movie);
+        }
+        saveSession(userId, session);
     }
 }
