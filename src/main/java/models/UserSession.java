@@ -8,7 +8,7 @@ import java.util.Set;
 public class UserSession {
     private Movie pendingMovie;
     private String pendingQuestionText;
-    private User user;
+    private final User user;
 
     private final Set<String> watchedIds = new HashSet<>();
     private final List<Movie> watched = new ArrayList<>();
@@ -21,9 +21,6 @@ public class UserSession {
         return user;
     }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
 
     public boolean hasPendingQuestion() {
         return pendingMovie != null && pendingQuestionText != null;
@@ -75,8 +72,5 @@ public class UserSession {
 
     public List<Movie> getWatched() {
         return new ArrayList<>(watched);
-    }
-    public Set<String> getWatchedIds() {
-        return watchedIds;
     }
 }

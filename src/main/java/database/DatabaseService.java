@@ -66,7 +66,7 @@ public class DatabaseService {
 
             String sqlUser = """
                         SELECT username, first_name, last_name
-                        FROM users 
+                        FROM users
                         WHERE telegram_id = ?
                     """;
 
