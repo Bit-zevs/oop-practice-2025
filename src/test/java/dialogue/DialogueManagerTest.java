@@ -2,6 +2,8 @@ package dialogue;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import data.MovieQuestions;
+import services.MovieNewsService;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,6 +14,13 @@ public class DialogueManagerTest {
 
     @BeforeEach
     void setUp() {
+        System.setProperty("DB_URL", "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1");
+        System.setProperty("DB_USER", "sa");
+        System.setProperty("DB_PASSWORD", "");
+
+        MovieQuestions questions = new MovieQuestions();
+        MovieNewsService newsService = new MovieNewsService();
+
         manager = new DialogueManager();
     }
 
@@ -109,7 +118,8 @@ public class DialogueManagerTest {
 
     @Test
     void testWatchedEmptyList() {
-        BotResponse responseResp = manager.handleMessage(userId, "/watched");
+        String newUser = "new-user";
+        BotResponse responseResp = manager.handleMessage(newUser, "/watched");
         String response = responseResp.getText();
         assertNotNull(response);
         assertTrue(response.toLowerCase().contains("не отметили"));

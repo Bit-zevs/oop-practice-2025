@@ -1,23 +1,38 @@
 package models;
 
-
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class UserSession {
     private Movie pendingMovie;
     private String pendingQuestionText;
+    private final User user;
+
     private final Set<String> watchedIds = new HashSet<>();
     private final List<Movie> watched = new ArrayList<>();
+
+    public UserSession(User user) {
+        this.user = user;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
 
     public boolean hasPendingQuestion() {
         return pendingMovie != null && pendingQuestionText != null;
     }
 
-    public Movie getPendingMovie() { return pendingMovie; }
-    public String getPendingQuestionText() { return pendingQuestionText; }
+    public Movie getPendingMovie() {
+        return pendingMovie;
+    }
+
+    public String getPendingQuestionText() {
+        return pendingQuestionText;
+    }
 
     public void setPendingQuestion(Movie movie, String text) {
         this.pendingMovie = movie;
@@ -30,7 +45,27 @@ public class UserSession {
     }
 
     public void markWatched(Movie movie) {
-        if (watchedIds.add(movie.getId())) {
+        if (!watchedIds.add(movie.getId())) {
+            throw new IllegalStateException("Movie in watched list yet!");
+        }
+        watched.add(movie);
+    }
+
+    public void markUnwatched(Movie movie) {
+        if (!watchedIds.remove(movie.getId())) {
+            throw new IllegalStateException("Movie not in watched list!");
+        }
+        watched.removeIf(m -> m.getId().equals(movie.getId()));
+    }
+
+    public boolean isMovieWatched(Movie movie) {
+        if (movie == null) return false;
+        return watchedIds.contains(movie.getId());
+    }
+
+    public void addWatchedMovie(Movie movie) {
+        if (!watchedIds.contains(movie.getId())) {
+            watchedIds.add(movie.getId());
             watched.add(movie);
         }
     }
@@ -38,5 +73,4 @@ public class UserSession {
     public List<Movie> getWatched() {
         return new ArrayList<>(watched);
     }
-
 }

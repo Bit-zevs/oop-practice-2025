@@ -8,7 +8,9 @@ class UserSessionTest {
 
     @Test
     void testPendingQuestionLifecycle() {
-        UserSession session = new UserSession();
+        User user = new User();
+        UserSession session = new UserSession(user);
+
         assertFalse(session.hasPendingQuestion());
 
         Movie movie = new Movie("m001", "Test", 2020, false);
@@ -23,13 +25,16 @@ class UserSessionTest {
 
     @Test
     void testMarkWatched() {
-        UserSession session = new UserSession();
+        User user = new User();
+        UserSession session = new UserSession(user);
+
         Movie movie = new Movie("m001", "Test", 2020, false);
 
         session.markWatched(movie);
         assertEquals(1, session.getWatched().size());
 
-        session.markWatched(movie);
+        assertThrows(IllegalStateException.class, () -> session.markWatched(movie));
+
         assertEquals(1, session.getWatched().size(), "Дубликаты не должны добавляться");
     }
 }
