@@ -12,7 +12,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MovieApiClient {
     private static final String baseUrl = "https://api.poiskkino.dev";
@@ -110,7 +112,21 @@ public class MovieApiClient {
                     }
                 }
 
-                movies.add(new Movie(id, title, year, hasSequel, description, posterUrl));
+                Map<String, Double> ratings = new HashMap<>();
+                if (m.has("rating") && !m.isNull("rating")) {
+                    JSONObject ratingObj = m.optJSONObject("rating");
+                    if (ratingObj != null) {
+                        for (String key : ratingObj.keySet()) {
+                            double value = ratingObj.optDouble(key, 0.0);
+                            if (value > 0) {
+                                value = Math.round(value * 10.0) / 10.0;
+                                ratings.put(key, value);
+                            }
+                        }
+                    }
+                }
+
+                movies.add(new Movie(id, title, year, hasSequel, description, posterUrl, ratings));
             }
 
         } catch (IOException | InterruptedException e) {

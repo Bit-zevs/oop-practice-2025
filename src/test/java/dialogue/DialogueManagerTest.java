@@ -2,8 +2,6 @@ package dialogue;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import data.MovieQuestions;
-import services.MovieNewsService;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,12 +12,9 @@ public class DialogueManagerTest {
 
     @BeforeEach
     void setUp() {
-        System.setProperty("DB_URL", "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1");
-        System.setProperty("DB_USER", "sa");
-        System.setProperty("DB_PASSWORD", "");
-
-        MovieQuestions questions = new MovieQuestions();
-        MovieNewsService newsService = new MovieNewsService();
+        System.setProperty("DB_URL", "jdbc:postgresql://localhost:5432/testdb?sslmode=disable");
+        System.setProperty("DB_USER", "postgres");
+        System.setProperty("DB_PASSWORD", "password");
 
         manager = new DialogueManager();
     }
