@@ -34,6 +34,9 @@ public class DialogueManager {
         register(new UnwatchCommand(questions, this));
         register(new FindCommand(questions));
         register(new WatchedCommand());
+        register(new RateCommand(questions));
+        register(new UnrateCommand(questions));
+        register(new ShowRateCommand());
     }
 
     private void register(BotCommand command) {
@@ -67,6 +70,9 @@ public class DialogueManager {
         BotCommand command = commands.get(commandName);
         if (command != null) {
             BotResponse response = command.execute(userId, args, session);
+            if (commandName.equals("/rate") || commandName.equals("/unrate")) {
+                saveMovieRatings(userId, session);
+            }
             persistSessionData(userId, session);
             return response;
         }
@@ -80,10 +86,39 @@ public class DialogueManager {
         return new BotResponse("Неизвестная команда. Введите /help для списка доступных команд.");
     }
 
+
     private void persistSessionData(String userId, UserSession session) {
         for (Movie movie : session.getWatched()) {
             saveWatchedMovie(userId, movie);
         }
         saveSession(userId, session);
+    }
+    private void saveMovieRatings(String userId, UserSession session) {
+        Map<String, Integer> ratings = session.getAllRatings();
+        Map<String, Integer> savedRatings = dbService.loadMovieRatings(userId);
+
+        for (Map.Entry<String, Integer> entry : ratings.entrySet()) {
+            String movieTitle = entry.getKey();
+            int rating = entry.getValue();
+
+            if (!savedRatings.containsKey(movieTitle) ||
+                    savedRatings.get(movieTitle) != rating) {
+
+                Movie movie = questions.findMovieByTitle(movieTitle);
+                if (movie != null) {
+                    dbService.saveMovieRating(userId, movie, rating);
+                } else {
+                    Movie tempMovie = new Movie("", movieTitle, 0, false);
+                    dbService.saveMovieRating(userId, tempMovie, rating);
+                }
+            }
+        }
+
+        for (String movieTitle : savedRatings.keySet()) {
+            if (!ratings.containsKey(movieTitle)) {
+                Movie tempMovie = new Movie("", movieTitle, 0, false);
+                dbService.removeMovieRating(userId, tempMovie);
+            }
+        }
     }
 }

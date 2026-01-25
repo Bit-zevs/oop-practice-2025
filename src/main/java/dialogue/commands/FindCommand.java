@@ -20,7 +20,7 @@ public class FindCommand implements BotCommand {
 
     @Override
     public String getDescription() {
-        return "Поиск фильма";
+        return "поиск фильма";
     }
 
     @Override
@@ -36,8 +36,15 @@ public class FindCommand implements BotCommand {
             return new BotResponse("Фильм не найден.");
         }
 
+        Integer userRating = session.getUserRating(found);
+        String ratingText = (userRating == null)
+                ? "Вы ещё не оценивали этот фильм"
+                : "Ваша оценка: " + userRating;
+
+
         String text = "🎬" + found + "\n\n" +
-                found.getDescription() + "\n\n";
+                found.getDescription() + "\n\n" +
+                found.getRating() + ratingText;
 
         return new BotResponse(text, found.getPosterUrl());
     }

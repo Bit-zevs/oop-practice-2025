@@ -1,9 +1,6 @@
 package models;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class UserSession {
     private Movie pendingMovie;
@@ -13,6 +10,8 @@ public class UserSession {
     private final Set<String> watchedIds = new HashSet<>();
     private final List<Movie> watched = new ArrayList<>();
 
+    private final Map<String, Integer> movieRatings = new HashMap<>();
+
     public UserSession(User user) {
         this.user = user;
     }
@@ -20,7 +19,6 @@ public class UserSession {
     public User getUser() {
         return user;
     }
-
 
     public boolean hasPendingQuestion() {
         return pendingMovie != null && pendingQuestionText != null;
@@ -42,6 +40,29 @@ public class UserSession {
     public void clearPendingQuestion() {
         this.pendingMovie = null;
         this.pendingQuestionText = null;
+    }
+
+    public void rateMovie(Movie movie, int rating) {
+        if (rating < 1 || rating > 10) {
+            throw new IllegalArgumentException("Рейтинг должен быть от 1 до 10");
+        }
+        movieRatings.put(movie.getTitle(), rating);
+    }
+
+    public void unrateMovie(Movie movie) {
+        if (movieRatings.containsKey(movie.getTitle())) {
+            movieRatings.remove(movie.getTitle());
+        } else {
+            throw new IllegalArgumentException("Вы не оценивали этот фильм");
+        }
+    }
+
+    public Integer getUserRating(Movie movie) {
+        return movieRatings.get(movie.getTitle());
+    }
+
+    public Map<String, Integer> getAllRatings() {
+        return new HashMap<>(movieRatings);
     }
 
     public void markWatched(Movie movie) {
@@ -73,4 +94,5 @@ public class UserSession {
     public List<Movie> getWatched() {
         return new ArrayList<>(watched);
     }
+
 }

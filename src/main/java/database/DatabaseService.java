@@ -7,6 +7,8 @@ import models.UserSession;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class DatabaseService {
 
@@ -32,28 +34,47 @@ public class DatabaseService {
 
     private void initDatabase() {
         try (Connection conn = getConnection()) {
-            String usersSql = """
+
+            conn.prepareStatement("""
                         CREATE TABLE IF NOT EXISTS users (
                             telegram_id VARCHAR(50) PRIMARY KEY,
                             username VARCHAR(100),
                             first_name VARCHAR(100),
                             last_name VARCHAR(100)
                         )
-                    """;
-            conn.prepareStatement(usersSql).execute();
+                    """).execute();
 
-            String moviesSql = """
+            conn.prepareStatement("""
                         CREATE TABLE IF NOT EXISTS watched_movies (
                             id SERIAL PRIMARY KEY,
                             telegram_id VARCHAR(50) NOT NULL,
                             movie_id VARCHAR(50) NOT NULL,
                             movie_title VARCHAR(255) NOT NULL,
-                            movie_year INT NOT NULL,
-                            watched_at TIMESTAMP DEFAULT NOW(),
-                            UNIQUE (telegram_id, movie_id)
+                            movie_year INT,
+                            watched_at TIMESTAMP DEFAULT NOW()
                         )
-                    """;
-            conn.prepareStatement(moviesSql).execute();
+                    """).execute();
+
+            conn.prepareStatement("""
+                        CREATE UNIQUE INDEX IF NOT EXISTS unique_user_movie
+                        ON watched_movies (telegram_id, movie_id)
+                    """).execute();
+
+            conn.prepareStatement("""
+                        CREATE TABLE IF NOT EXISTS movie_ratings (
+                            id SERIAL PRIMARY KEY,
+                            telegram_id VARCHAR(50) NOT NULL,
+                            movie_title VARCHAR(255) NOT NULL,
+                            rating INT NOT NULL CHECK (rating BETWEEN 1 AND 10),
+                            rated_at TIMESTAMP DEFAULT NOW()
+                        )
+                    """).execute();
+
+            conn.prepareStatement("""
+                        CREATE UNIQUE INDEX IF NOT EXISTS unique_user_movie_rating
+                        ON movie_ratings (telegram_id, movie_title)
+                    """).execute();
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -63,7 +84,6 @@ public class DatabaseService {
         User user;
 
         try (Connection conn = getConnection()) {
-
             String sqlUser = """
                         SELECT username, first_name, last_name
                         FROM users
@@ -105,14 +125,18 @@ public class DatabaseService {
         UserSession session = new UserSession(user);
 
         List<Movie> watchedMovies = loadWatchedMovies(userId);
-
         for (Movie movie : watchedMovies) {
             session.addWatchedMovie(movie);
         }
 
+        Map<String, Integer> ratings = loadMovieRatings(userId);
+        for (Map.Entry<String, Integer> entry : ratings.entrySet()) {
+            Movie tempMovie = new Movie("", entry.getKey(), 0, false);
+            session.rateMovie(tempMovie, entry.getValue());
+        }
+
         return session;
     }
-
 
     public void saveSession(String userId, UserSession session) {
         try (Connection conn = getConnection()) {
@@ -162,12 +186,23 @@ public class DatabaseService {
     public List<Movie> loadWatchedMovies(String userId) {
         List<Movie> movies = new ArrayList<>();
         try (Connection conn = getConnection()) {
-            String sql = "SELECT movie_id, movie_title, movie_year FROM watched_movies WHERE telegram_id = ?";
+            String sql = """
+            SELECT movie_id, movie_title, movie_year
+            FROM watched_movies
+            WHERE telegram_id = ?
+            AND movie_title IS NOT NULL
+            AND movie_title != ''
+            AND movie_title != 'Unknown Title'
+        """;
             PreparedStatement stmt = conn.prepareStatement(sql);
             stmt.setString(1, userId);
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
+                String title = rs.getString("movie_title");
+                if (title == null || title.trim().isEmpty() || title.equals("Unknown Title")) {
+                    continue;
+                }
                 movies.add(new Movie(
                         rs.getString("movie_id"),
                         rs.getString("movie_title"),
@@ -179,5 +214,74 @@ public class DatabaseService {
             e.printStackTrace();
         }
         return movies;
+    }
+
+    public void saveMovieRating(String userId, Movie movie, int rating) {
+        String sql = """
+                    INSERT INTO movie_ratings (telegram_id, movie_title, rating)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT (telegram_id, movie_title)
+                    DO UPDATE SET rating = EXCLUDED.rating, rated_at = NOW()
+                """;
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, userId);
+            stmt.setString(2, movie.getTitle());
+            stmt.setInt(3, rating);
+
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public void removeMovieRating(String userId, Movie movie) {
+        String sql = """
+                    DELETE FROM movie_ratings
+                    WHERE telegram_id = ?
+                      AND LOWER(movie_title) = LOWER(?)
+                """;
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, userId);
+            stmt.setString(2, movie.getTitle());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Map<String, Integer> loadMovieRatings(String userId) {
+        Map<String, Integer> ratings = new HashMap<>();
+        String sql = """
+                    SELECT movie_title, rating
+                    FROM movie_ratings
+                    WHERE telegram_id = ?
+                """;
+
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, userId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    ratings.put(
+                            rs.getString("movie_title"),
+                            rs.getInt("rating")
+                    );
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return ratings;
     }
 }
